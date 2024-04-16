@@ -1,1 +1,4 @@
 *.o
+*.json
+pipe
+.DS_Store
