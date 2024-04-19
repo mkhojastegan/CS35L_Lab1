@@ -28,14 +28,18 @@ int main(int argc, char *argv[])
 		pid_t pid = fork();
 		if(pid == 0){
 			if(execlp(argv[i], argv[i], NULL) == -1){
-				exit(1);
+				// TODO: Check for bogus programs inserted
+				// Exits from the child with 2
+				exit(2);
 			}
 			exit(0);
 		} else {
 			int status;
 			wait(&status);
 			if(WIFEXITED(status) && WEXITSTATUS(status) != 0){
-				exit(1);
+				// We want to return the status of WEXITSTATUS
+				// in the final program
+				exit(WEXITSTATUS(status));
 			}
 		}
 	}
