@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 		exit(EINVAL);
 	}
 
-
+	// Two program edge case
 	if(argc == 3){
         int fd[2];
 		// Pipe error
@@ -67,6 +67,9 @@ int main(int argc, char *argv[])
 				}
             }
         }
+	}
+	if(argc == 3){
+		exit(EXIT_SUCCESS);
 	}
 
 	// for(int i = 1; i < argc; i++){
