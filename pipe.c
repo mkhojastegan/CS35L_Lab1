@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 			// Error opening first program
 			// Should be EINVAL?
             if(execlp(argv[1], argv[1], NULL) == -1){
-                exit(2);
+                exit(EINVAL);
             }
             exit(0);
         } else {
@@ -77,6 +77,7 @@ int main(int argc, char *argv[])
                 close(fd[1]);
 				int status;
                 wait(&status);
+				// If pid1 or pid2 exit with failure
                 if(WIFEXITED(status) && WEXITSTATUS(status) != 0){
 					exit(WEXITSTATUS(status));
 				}
