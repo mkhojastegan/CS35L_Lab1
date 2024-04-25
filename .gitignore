@@ -2,3 +2,4 @@
 *.json
 pipe
 .DS_Store
+*.pyc

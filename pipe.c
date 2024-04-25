@@ -92,24 +92,39 @@ int main(int argc, char *argv[])
 		exit(EXIT_SUCCESS);
 	}
 
-	// for(int i = 1; i < argc; i++){
-	// 	pid_t pid = fork();
-	// 	if(pid == 0){
-	// 		if(execlp(argv[i], argv[i], NULL) == -1){
-	// 			// TODO: Check for bogus programs inserted
-	// 			// Exits from the child with 2
-	// 			exit(2);
-	// 		}
-	// 		exit(0);
-	// 	} else {
-	// 		int status;
-	// 		wait(&status);
-	// 		if(WIFEXITED(status) && WEXITSTATUS(status) != 0){
-	// 			// We want to return the status of WEXITSTATUS
-	// 			// in the final program
-	// 			exit(WEXITSTATUS(status));
-	// 		}
-	// 	}
-	// }
+	if(argc > 3){
+        int fd[2];
+        int in = 0;  // This is the input file descriptor for each command
+        pid_t pid;
+
+        for(int i = 1; i < argc; i++){
+            pipe(fd); // Create a pipe
+
+            pid = fork();
+
+            if(pid == 0){
+                dup2(in, STDIN_FILENO); // Read from the previous command's pipe
+
+                if(i != argc-1){
+                    dup2(fd[1], STDOUT_FILENO); // If not the last command, write to the next command's pipe
+                }
+                close(fd[0]); // Close unused read end
+                if(execlp(argv[i], argv[i], NULL) == -1){
+                    exit(EINVAL);
+                }
+                exit(0);
+            } else {
+                wait(NULL); // Parent waits for the child to finish
+                close(fd[1]); // Close unused write end
+                in = fd[0]; // The output of the current command will be the input of the next command
+            }
+        }
+        int status;
+        waitpid(pid, &status, 0); // Wait for the last process to finish
+        if(WIFEXITED(status) && WEXITSTATUS(status) != 0){
+            exit(WEXITSTATUS(status));
+        }
+    }
+
 	return 0;
 }
