@@ -111,7 +111,10 @@ int main(int argc, char *argv[])
 
             if(pid == 0){
 				// Take in other command's pipe
-                dup2(in, STDIN_FILENO);
+                if(dup2(in, STDIN_FILENO) == -1){
+					// dup2 error
+					exit(EXIT_FAILURE);
+				}
 
                 if(i != argc-1){
 					// Everything except last command
