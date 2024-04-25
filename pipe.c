@@ -14,6 +14,24 @@ int main(int argc, char *argv[])
 		exit(EINVAL);
 	}
 
+	if(argc == 2){
+		pid_t pid = fork();
+		if(pid == 0){
+			if(execlp(argv[1], argv[1], NULL) == -1){
+				exit(EINVAL);
+			}
+			exit(0);
+		} else {
+			int status;
+			wait(&status);
+			if(WIFEXITED(status) && WEXITSTATUS(status) != 0){
+				// We want to return the status of WEXITSTATUS
+				// in the final program
+				exit(WEXITSTATUS(status));
+			}
+		}
+	}
+
 	// Two program edge case
 	if(argc == 3){
         int fd[2];
@@ -34,6 +52,7 @@ int main(int argc, char *argv[])
             close(fd[0]);
             close(fd[1]);
 			// Error opening first program
+			// Should be EINVAL?
             if(execlp(argv[1], argv[1], NULL) == -1){
                 exit(2);
             }
