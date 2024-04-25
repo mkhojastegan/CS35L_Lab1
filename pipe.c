@@ -14,6 +14,7 @@ int main(int argc, char *argv[])
 		exit(EINVAL);
 	}
 
+	// Edge case - 1 argument passed
 	if(argc == 2){
 		pid_t pid = fork();
 		if(pid == 0){
