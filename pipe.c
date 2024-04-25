@@ -94,33 +94,45 @@ int main(int argc, char *argv[])
 
 	if(argc > 3){
         int fd[2];
-        int in = 0;  // This is the input file descriptor for each command
+		// input
+        int in = 0;
         pid_t pid;
 
         for(int i = 1; i < argc; i++){
-            pipe(fd); // Create a pipe
+            if(pipe(fd) == -1){
+				exit(EXIT_FAILURE);
+			}
 
             pid = fork();
+			// Fork error
+			if(pid == -1){
+				exit(EXIT_FAILURE);
+			}
 
             if(pid == 0){
-                dup2(in, STDIN_FILENO); // Read from the previous command's pipe
+				// Take in other command's pipe
+                dup2(in, STDIN_FILENO);
 
                 if(i != argc-1){
-                    dup2(fd[1], STDOUT_FILENO); // If not the last command, write to the next command's pipe
+					// Everything except last command
+                    dup2(fd[1], STDOUT_FILENO);
                 }
-                close(fd[0]); // Close unused read end
+                close(fd[0]);
                 if(execlp(argv[i], argv[i], NULL) == -1){
+					// Bogus program
                     exit(EINVAL);
                 }
                 exit(0);
             } else {
-                wait(NULL); // Parent waits for the child to finish
-                close(fd[1]); // Close unused write end
-                in = fd[0]; // The output of the current command will be the input of the next command
+				// Wait for child, make output of current command the next input
+                wait(NULL);
+                close(fd[1]);
+                in = fd[0];
             }
         }
         int status;
-        waitpid(pid, &status, 0); // Wait for the last process to finish
+		// Last process
+        waitpid(pid, &status, 0);
         if(WIFEXITED(status) && WEXITSTATUS(status) != 0){
             exit(WEXITSTATUS(status));
         }
