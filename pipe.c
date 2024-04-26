@@ -38,17 +38,17 @@ int main(int argc, char *argv[])
         int fd[2];
 		// Pipe error
         if(pipe(fd) == -1){
-			exit(EXIT_FAILURE);
+			exit(errno);
 		}
         pid_t pid1 = fork();
 		// Fork error
 		if(pid1 == -1){
-			exit(EXIT_FAILURE);
+			exit(errno);
 		}
         if(pid1 == 0){
 			// dup2 Error, if that's even possible
             if(dup2(fd[1], STDOUT_FILENO) == -1 ){
-				exit(EXIT_FAILURE);
+				exit(EINVAL);
 			}
             close(fd[0]);
             close(fd[1]);
@@ -61,16 +61,16 @@ int main(int argc, char *argv[])
         } else {
             pid_t pid2 = fork();
 			if(pid2 == -1){
-				exit(EXIT_FAILURE);
+				exit(errno);
 			}
             if(pid2 == 0){
                 if(dup2(fd[0], STDIN_FILENO) == -1){
-					exit(EXIT_FAILURE);
+					exit(EINVAL);
 				}
                 close(fd[0]);
                 close(fd[1]);
                 if(execlp(argv[2], argv[2], NULL) == -1){
-                    exit(2);
+                    exit(EINVAL);
                 }
                 exit(0);
             } else {
@@ -101,20 +101,20 @@ int main(int argc, char *argv[])
 
         for(int i = 1; i < argc; i++){
             if(pipe(fd) == -1){
-				exit(EXIT_FAILURE);
+				exit(errno);
 			}
 
             pid = fork();
 			// Fork error
 			if(pid == -1){
-				exit(EXIT_FAILURE);
+				exit(errno);
 			}
 
             if(pid == 0){
 				// Take in other command's pipe
                 if(dup2(in, STDIN_FILENO) == -1){
 					// dup2 error
-					exit(EXIT_FAILURE);
+					exit(errno);
 				}
 
                 if(i != argc-1){
@@ -129,7 +129,11 @@ int main(int argc, char *argv[])
                 exit(0);
             } else {
 				// Wait for child, make output of current command the next input
-                wait(NULL);
+				int status;
+                waitpid(pid, &status, 0);
+				if(WIFEXITED(status) && WEXITSTATUS(status) != 0){
+					exit(WEXITSTATUS(status));
+				}
                 close(fd[1]);
                 in = fd[0];
             }
